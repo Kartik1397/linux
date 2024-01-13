@@ -208,12 +208,14 @@ impl<T: Filter> Registration<T> {
         crate::static_assert!(bindings::nf_hook_ops_type_NF_HOOK_OP_UNDEFINED == 0);
 
         if let Some(ref device) = dev {
-            this.hook.dev = device.0.get();
+            this.hook.dev = ARef::into_raw(device);
         }
 
         // SAFETY: `ns` has a valid reference to the namespace, and `this.hook` was just
         // initialised above, so they're both valid.
-        to_result(unsafe { bindings::nf_register_net_hook(ns.0.get(), &this.hook) })?;
+        to_result(unsafe {
+            bindings::nf_register_net_hook(ARef::into_raw(ns).cast(), &this.hook)
+        })?;
 
         this.dev = dev;
         this.ns = Some(ns);

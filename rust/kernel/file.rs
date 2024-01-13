@@ -209,12 +209,11 @@ impl FileDescriptorReservation {
     pub fn commit(self, file: ARef<File>) {
         // SAFETY: `self.fd` was previously returned by `get_unused_fd_flags`, and `file.ptr` is
         // guaranteed to have an owned ref count by its type invariants.
-        unsafe { bindings::fd_install(self.fd, file.0.get()) };
+        unsafe { bindings::fd_install(self.fd, ARef::into_raw(file).cast()) };
 
         // `fd_install` consumes both the file descriptor and the file reference, so we cannot run
         // the destructors.
         core::mem::forget(self);
-        core::mem::forget(file);
     }
 }
 
